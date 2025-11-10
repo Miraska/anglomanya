@@ -11,15 +11,36 @@ $orderId = $_GET['order_id'];
 $order = getOrderById($orderId);
 $orderItems = getOrderItems($orderId);
 
-// Проверяем, что заказ принадлежит текущему пользователю и оплачен
-if (!$order || $order['user_id'] != $_SESSION['user_id'] || $order['status'] != 'paid') {
+// Проверяем, что заказ принадлежит текущему пользователю
+if (!$order || $order['user_id'] != $_SESSION['user_id']) {
     header('Location: index.php?page=courses');
     exit;
+}
+
+// Проверяем статус заказа
+$statusMessage = '';
+$statusClass = '';
+switch ($order['status']) {
+    case 'paid':
+        $statusMessage = 'Оплата подтверждена! Курсы добавлены в ваш аккаунт.';
+        $statusClass = 'status-completed';
+        break;
+    case 'pending':
+        $statusMessage = 'Оплата прошла успешно! Ожидайте подтверждения администратора.';
+        $statusClass = 'status-pending';
+        break;
+    case 'cancelled':
+        $statusMessage = 'Заказ отменен. Деньги будут возвращены.';
+        $statusClass = 'status-cancelled';
+        break;
 }
 ?>
 
 <section class="payment-success-section">
     <div class="container">
+        <div class="status-info <?php echo $statusClass; ?>" style="margin: 20px 0; padding: 15px; border-radius: 8px; text-align: center;">
+            <?php echo $statusMessage; ?>
+        </div>
         <div class="success-card">
             <div class="success-icon">
                 <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
@@ -52,7 +73,12 @@ if (!$order || $order['user_id'] != $_SESSION['user_id'] || $order['status'] != 
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Статус:</span>
-                            <span class="detail-value status-completed">Оплачен</span>
+                            <span class="detail-value <?php echo $statusClass; ?>">
+                                <?php 
+                                echo $order['status'] === 'paid' ? 'Оплачен' : 
+                                    ($order['status'] === 'pending' ? 'Ожидает подтверждения' : 'Отменен');
+                                ?>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -138,6 +164,23 @@ if (!$order || $order['user_id'] != $_SESSION['user_id'] || $order['status'] != 
 
 .status-completed {
     color: var(--success-600);
+    background: var(--success-50);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.status-pending {
+    color: var(--warning-600);
+    background: var(--warning-50);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.status-cancelled {
+    color: var(--error-600);
+    background: var(--error-50);
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
 .courses-list {
@@ -149,8 +192,9 @@ if (!$order || $order['user_id'] != $_SESSION['user_id'] || $order['status'] != 
 
 .course-item {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
+    gap: 5px;
     padding: 16px;
     background: var(--gray-50);
     border-radius: var(--radius-md);

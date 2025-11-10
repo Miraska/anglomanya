@@ -120,6 +120,11 @@ function updateProfile($userId, $data) {
         $updates[] = "avatar = ?";
         $params[] = $data['avatar'];
     }
+
+    if (!empty($data['password'])) {
+        $updates[] = "password = ?";
+        $params[] = $data['password'];
+    }
     
     if (empty($updates)) {
         return ['success' => false, 'message' => 'Нет данных для обновления'];

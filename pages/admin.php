@@ -138,9 +138,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_order_status'])) {
         $orderId = $_POST['order_id'];
         $status = $_POST['status'];
-        $result = updateOrderStatus($orderId, $status);
-        $message = $result ? 'Статус обновлен' : 'Ошибка';
-        $messageType = $result ? 'success' : 'error';
+        
+        // Получаем информацию о заказе для получения user_id
+        $order = getOrderById($orderId);
+        if (!$order) {
+            $message = 'Заказ не найден';
+            $messageType = 'error';
+        } else {
+            $result = updateOrderStatus($orderId, $status);
+            
+            if ($result) {
+                if ($status === 'paid') {
+                    // Автоматически добавляем курсы пользователю при подтверждении оплаты
+                    $orderItems = query("SELECT course_id FROM order_items WHERE order_id = ?", [$orderId]);
+                    foreach ($orderItems as $item) {
+                        // Проверяем, нет ли уже этого курса у пользователя
+                        $existing = queryOne(
+                            "SELECT id FROM user_courses WHERE user_id = ? AND course_id = ?", 
+                            [$order['user_id'], $item['course_id']]
+                        );
+                        if (!$existing) {
+                            query(
+                                "INSERT INTO user_courses (user_id, course_id, purchased_at) VALUES (?, ?, NOW())", 
+                                [$order['user_id'], $item['course_id']]
+                            );
+                        }
+                    }
+                    $message = 'Статус обновлен и курсы добавлены пользователю';
+                } else if ($status === 'cancelled') {
+                    // Удаляем курсы у пользователя при отмене заказа
+                    query(
+                        "DELETE uc FROM user_courses uc 
+                        JOIN order_items oi ON uc.course_id = oi.course_id 
+                        WHERE oi.order_id = ? AND uc.user_id = ?", 
+                        [$orderId, $order['user_id']]
+                    );
+                    $message = 'Статус обновлен и курсы удалены у пользователя';
+                } else {
+                    $message = 'Статус обновлен';
+                }
+                $messageType = 'success';
+            } else {
+                $message = 'Ошибка при обновлении статуса';
+                $messageType = 'error';
+            }
+        }
     }
 }
 
@@ -255,7 +297,7 @@ $categories = getCategories();
                                 <td><?php echo htmlspecialchars($course['title']); ?></td>
                                 <td><?php echo number_format($course['price'], 0, ',', ' '); ?>₽</td>
                                 <td>
-                                    <button class="btn btn-secondary" onclick="openEditCourseModal('<?php echo str_replace("\'", "\\\'", json_encode($course)); ?>')">Редактировать</button>
+                                    <button class="btn btn-secondary" onclick="openEditCourseModal(<?php echo htmlspecialchars(json_encode($course), ENT_QUOTES, 'UTF-8'); ?>)">Редактировать</button>
                                     <form method="POST" style="display: inline;" onsubmit="return confirm('Удалить курс?');">
                                         <input type="hidden" name="delete_course" value="1">
                                         <input type="hidden" name="id" value="<?php echo $course['id']; ?>">
@@ -296,7 +338,7 @@ $categories = getCategories();
                                 <td><?php echo htmlspecialchars($user['email']); ?></td>
                                 <td><?php echo $user['role'] === 'admin' ? 'Администратор' : 'Студент'; ?></td>
                                 <td>
-                                    <button class="btn btn-secondary" onclick="openEditUserModal('<?php echo str_replace("\'", "\\\'", json_encode($user)); ?>')">Изменить</button>
+                                    <button class="btn btn-secondary" onclick="openEditUserModal(<?php echo htmlspecialchars(json_encode($user), ENT_QUOTES, 'UTF-8'); ?>)">Изменить</button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -336,7 +378,6 @@ $categories = getCategories();
                                         <input type="hidden" name="update_order_status" value="1">
                                         <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
                                         <select name="status">
-                                            <option value="pending" <?php echo $order['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
                                             <option value="paid" <?php echo $order['status'] === 'paid' ? 'selected' : ''; ?>>Paid</option>
                                             <option value="cancelled" <?php echo $order['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                                         </select>
@@ -362,7 +403,7 @@ $categories = getCategories();
                     <?php foreach ($categories as $category): ?>
                         <div class="category-card">
                             <div class="category-actions">
-                                <button class="icon-btn" onclick="openEditCategoryModal('<?php echo str_replace("\'", "\\\'", json_encode($category)); ?>')"><i class="fas fa-edit"></i></button>
+                                <button class="icon-btn" onclick="openEditCategoryModal(<?php echo htmlspecialchars(json_encode($category), ENT_QUOTES, 'UTF-8'); ?>)"><i class="fas fa-edit"></i></button>
                                 <form method="POST" style="display: inline;" onsubmit="return confirm('Удалить категорию?');">
                                     <input type="hidden" name="delete_category" value="1">
                                     <input type="hidden" name="id" value="<?php echo $category['id']; ?>">
@@ -746,8 +787,7 @@ function closeModal(modalId) {
     setTimeout(() => { modal.style.display = 'none'; }, 300); // Ждём окончания анимации
 }
 
-function openEditCourseModal(json_str) {
-    const course = JSON.parse(json_str);
+function openEditCourseModal(course) {
     document.getElementById('edit_course_id').value = course.id;
     document.getElementById('edit_course_category_id').value = course.category_id;
     document.getElementById('edit_title').value = course.title;
@@ -757,8 +797,7 @@ function openEditCourseModal(json_str) {
     openModal('editCourseModal');
 }
 
-function openEditUserModal(json_str) {
-    const user = JSON.parse(json_str);
+function openEditUserModal(user) {
     document.getElementById('edit_user_id').value = user.id;
     document.getElementById('edit_user_name').value = user.name;
     document.getElementById('edit_user_email').value = user.email;
@@ -766,8 +805,7 @@ function openEditUserModal(json_str) {
     openModal('editUserModal');
 }
 
-function openEditCategoryModal(json_str) {
-    const category = JSON.parse(json_str);
+function openEditCategoryModal(category) {
     document.getElementById('edit_category_id').value = category.id;
     document.getElementById('edit_category_name').value = category.name;
     document.getElementById('edit_category_slug').value = category.slug;

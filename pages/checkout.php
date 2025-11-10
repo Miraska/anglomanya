@@ -96,11 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endforeach; ?>
                 </div>
 
-                <div class="order-summary" style="margin-top: 24px; padding-top: 24px; border-top: 2px solid var(--gray-300);">
-                    <div class="summary-row">
-                        <span class="body-md">Промежуточный итог:</span>
-                        <span class="body-md"><?php echo number_format($cartTotal, 0, ',', ' '); ?>₽</span>
-                    </div>
+                <div class="order-summary" style="margin-top: 24px; padding-top: 24px;">
                     <div class="summary-row" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--gray-300);">
                         <span class="summary-total">Итого:</span>
                         <span class="summary-total"><?php echo number_format($cartTotal, 0, ',', ' '); ?>₽</span>
@@ -138,15 +134,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 .order-item {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
     padding: 16px;
     background: var(--gray-50);
     border-radius: var(--radius-md);
 }
 
-.order-item .body-md {
-    width: 20%;
-}
 
 .payment-info {
     margin-top: 32px;

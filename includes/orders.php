@@ -107,7 +107,7 @@ function completeOrder($orderId) {
             }
         }
         
-        // Обновляем статус заказа на 'paid' (вместо 'completed')
+        // Обновляем статус заказа на 'paid'
         $result = updateOrderStatus($orderId, 'paid');
         if (!$result) {
             throw new Exception('Ошибка при обновлении статуса заказа');

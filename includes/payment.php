@@ -19,31 +19,33 @@ function createYuKassaPayment($orderId, $amount, $description) {
 
 // Обработка фейкового платежа
 function processFakePayment($orderId, $paymentId) {
-    // Проверяем, что заказ существует и ожидает оплаты
     $order = getOrderById($orderId);
-    if (!$order) {
-        return ['success' => false, 'message' => 'Заказ не найден'];
+    if (!$order || $order['status'] !== 'pending') {
+        return ['success' => false, 'message' => 'Заказ не найден или уже обработан'];
     }
-    
-    if ($order['status'] !== 'pending') {
-        return ['success' => false, 'message' => 'Заказ уже обработан. Статус: ' . $order['status']];
-    }
-    
-    if ($order['payment_id'] !== $paymentId) {
-        return ['success' => false, 'message' => 'Неверный ID платежа'];
-    }
-    
-    // Имитируем обработку платежа
+
+    // Имитируем успешную оплату
     sleep(2);
     
-    // Завершаем заказ
-    $result = completeOrder($orderId);
+    // 1. Обновляем статус на 'paid'
+    updateOrderStatus($orderId, 'paid', $paymentId);
     
-    if ($result) {
-        return ['success' => true];
-    } else {
-        return ['success' => false, 'message' => 'Ошибка при завершении заказа'];
+    // 2. СРАЗУ даем доступ к курсам
+    $orderItems = query("SELECT course_id FROM order_items WHERE order_id = ?", [$orderId]);
+    foreach ($orderItems as $item) {
+        $existing = queryOne(
+            "SELECT id FROM user_courses WHERE user_id = ? AND course_id = ?", 
+            [$order['user_id'], $item['course_id']]
+        );
+        if (!$existing) {
+            query(
+                "INSERT INTO user_courses (user_id, course_id, purchased_at) VALUES (?, ?, NOW())", 
+                [$order['user_id'], $item['course_id']]
+            );
+        }
     }
+    
+    return ['success' => true, 'message' => 'Оплата прошла успешно! Курсы добавлены в ваш аккаунт.'];
 }
 
 // Проверка статуса платежа
