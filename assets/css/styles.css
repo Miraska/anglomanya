@@ -867,8 +867,11 @@ main {
   transform: scale(1.2);
 }
 
-/* Адаптивность для мобильных устройств */
-@media (max-width: 768px) {
+/* Адаптивность для планшетов устройств */
+@media (max-width: 992px) {
+  .container{
+    padding: 0 14px;
+  }
   .teacher-card {
       flex-direction: column;
   }
@@ -895,6 +898,217 @@ main {
   }
 }
 
+
+/* Стили для бургер-меню */
+.burger-menu {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 24px;
+    height: 18px;
+    cursor: pointer;
+    z-index: 1002;
+    position: relative;
+}
+
+.burger-menu span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background-color: #000;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+/* Анимация бургера в крестик */
+.burger-menu.active span:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+}
+
+.burger-menu.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.burger-menu.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
+
+
+/* Оверлей для мобильного меню */
+.mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+}
+
+.mobile-overlay.active {
+    display: block;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 420px) {
+  .container{
+    padding: 0 10px;
+  }
+
+  .teacher-card {
+      flex-direction: column;
+  }
+  
+  .teacher-photo {
+      flex: 0 0 250px;
+  }
+  
+  .teachers-slider {
+      padding: 0 20px;
+  }
+  
+  .nav-btn {
+      width: 40px;
+      height: 40px;
+  }
+  
+  .prev {
+      left: 5px;
+  }
+  
+  .next {
+      right: 5px;
+  }
+
+  .footer-flex {
+    flex-direction: column;
+  }
+
+  .burger-menu {
+      display: flex;
+  }
+
+  .nav-menu, .nav-actions {
+      display: none !important;
+  }
+
+  .nav-menu.mobile-open, .nav-actions.mobile-open {
+      display: flex !important;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      background: white;
+      flex-direction: column;
+      padding: 20px;
+      z-index: 1001;
+      border-top: 1px solid var(--gray-200);
+  }
+
+  .nav-menu.mobile-open {
+      align-items: flex-start;
+      gap: 0;
+  }
+
+  .nav-actions.mobile-open {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 15px;
+      border-top: 1px solid var(--gray-200);
+  }
+
+  .nav-menu.mobile-open .nav-item {
+      width: 100%;
+      border-bottom: 1px solid var(--gray-200);
+  }
+
+  .nav-menu.mobile-open .nav-item:last-child {
+      border-bottom: none;
+  }
+
+  .nav-menu.mobile-open .nav-link {
+      display: block;
+      padding: 15px 0;
+      width: 100%;
+      font-size: 16px;
+  }
+
+  .nav-menu.mobile-open .dropdown-menu {
+      position: static;
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      box-shadow: none;
+      background: var(--gray-50);
+      margin-top: 10px;
+      margin-left: 15px;
+      display: none;
+  }
+
+  .nav-menu.mobile-open .dropdown.active .dropdown-menu {
+      display: block;
+  }
+
+  .nav-menu.mobile-open .dropdown-menu li {
+      border-bottom: 1px solid var(--gray-200);
+  }
+
+  .nav-menu.mobile-open .dropdown-menu li:last-child {
+      border-bottom: none;
+  }
+
+  .nav-menu.mobile-open .dropdown-menu a {
+      padding: 12px 15px;
+      font-size: 14px;
+  }
+
+  .cart-mobile, .profile-mobile, .login-mobile {
+      justify-content: center;
+      text-align: center;
+      width: 100%;
+  }
+
+  .cart-mobile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: var(--gray-100);
+      border-radius: var(--radius-md);
+      font-weight: 600;
+  }
+
+  /* Адаптивность для навбара */
+  .navbar {
+      position: relative;
+      flex-wrap: wrap;
+  }
+
+  .nav-brand h1 {
+      font-size: 1.4rem;
+  }
+
+  .nav-brand .logo {
+      height: 30px;
+  }
+
+  .nav-menu.mobile-open, .nav-actions.mobile-open {
+      animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+      from {
+          opacity: 0;
+          transform: translateY(-10px);
+      }
+      to {
+          opacity: 1;
+          transform: translateY(0);
+      }
+  }
+}
 
 
 /* faq ================================== */
@@ -989,6 +1203,7 @@ main {
 .footer-flex {
   display: flex;
   justify-content: space-between;
+  gap: 10px;
 }
 
 .footer-logo {
@@ -1474,9 +1689,6 @@ main {
     background: var(--primary-50);
 }
 
-.order-item:first-child {
-  width: 60%;
-}
 
 /* === ADMIN PANEL === */
 .admin-layout {
